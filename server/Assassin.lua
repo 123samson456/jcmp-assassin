@@ -23,7 +23,7 @@ function StartGame(args)
     player:ClearInventory()
     player:GiveWeapon(2, Weapon(2))
     -- key is predator, value is their prey
-    if index == players# then
+    if index == #players then
       targets[player] = players[1]
     else
       targets[player] = players[index + 1]
@@ -33,15 +33,30 @@ function StartGame(args)
   gameInProgress = true
 end
 
+-- takes the winner of the game as its argument
+function EndGame(args)
+  Chat:Broadcast("Game over! The winner was "..args.."!")
+  players = {}
+  targets = {}
+  gameInProgress = false
+end
+
 function PlayerDeathOrQuit(args)
   for pred, prey in targets do
     if prey == args.player then
       predator = pred
-      table.remove(targets, targets[prey])
-      table.remove(targets, targets[pred])
-      targets[pred] = targets[prey]
       break
     end
   end
-  predator:SendChatMessage("Your target has perished! You now have their target, "..targets[args.player])
+  -- if there's only one player left, its game over
+  table.remove(players, args.player)
+  if #players == 1 then
+    EndGame(predator)
+  else
+    -- reassigns the dead player's target to their assassin and removes them from the player list
+    table.remove(targets, targets[args.player])
+    table.remove(targets, targets[pred])
+    targets[pred] = targets[args.player]
+    predator:SendChatMessage("Your target has perished! You now have their target, "..targets[args.player])
+  end
 end
